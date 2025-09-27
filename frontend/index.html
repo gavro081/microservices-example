@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+	</head>
+	<body>
+		<div>
+			<form class="w-80 ml-4 mt-4" id="orderForm">
+				<div>
+					<label for="username" class="block text-sm font-medium text-gray-700"
+						>Username</label
+					>
+					<input
+						type="text"
+						id="username"
+						name="username"
+						class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border border-solid"
+						required
+					/>
+				</div>
+				<div>
+					<label for="product" class="block text-sm font-medium text-gray-700"
+						>Product Name</label
+					>
+					<input
+						type="text"
+						id="product"
+						name="product"
+						class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border border-solid"
+						required
+					/>
+				</div>
+				<div>
+					<label for="quantity" class="block text-sm font-medium text-gray-700"
+						>Quantity</label
+					>
+					<input
+						type="number"
+						id="quantity"
+						name="quantity"
+						class="mt-1 block w-full border-gray-300 rounded-md shadow-sm border border-solid"
+						required
+						min="1"
+					/>
+				</div>
+				<button id="submitBtn" class="bg-gray-300 p-2 rounded-md mt-4">
+					Submit
+				</button>
+			</form>
+		</div>
+	</body>
+	<script>
+		const usernameField = document.querySelector("#username");
+		const productField = document.querySelector("#product");
+		const quantityField = document.querySelector("#quantity");
+		const form = document.querySelector("#orderForm");
+
+		const submitForm = async (e) => {
+			e.preventDefault();
+
+			const username = usernameField.value;
+			const productName = productField.value;
+			const quantity = quantityField.value;
+
+			const payload = {
+				username,
+				productName,
+				quantity,
+			};
+
+			// todo add api gateway to backend
+			try {
+				const response = await fetch("http://localhost:8083/orders", {
+					method: "POST",
+					body: JSON.stringify(payload),
+				});
+				if (!response.ok) {
+					throw new Error("response status: ", response.status);
+				}
+				const res = await response.json();
+				console.log(res);
+			} catch (err) {
+				console.error(err);
+			}
+		};
+
+		form.addEventListener("submit", submitForm);
+	</script>
+</html>
