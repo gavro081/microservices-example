@@ -9,6 +9,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Entity
 @Data
 @Table(name = "orders")
@@ -18,7 +20,7 @@ import lombok.NoArgsConstructor;
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private UUID id;
 
     @Column(name = "user_id")
     @NotNull(message = "Category is required")
@@ -29,6 +31,10 @@ public class Order {
     private Long productId;
 
     @NotNull(message = "Quantity is required")
-    @PositiveOrZero(message = "Quantity must be positive or zero")
+    @Positive(message = "Quantity must be positive")
     private Integer quantity;
+
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Status is required")
+    private OrderStatus status;
 }
