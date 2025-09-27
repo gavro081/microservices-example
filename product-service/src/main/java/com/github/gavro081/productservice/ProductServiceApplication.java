@@ -12,11 +12,3 @@ public class ProductServiceApplication {
 		SpringApplication.run(ProductServiceApplication.class, args);
 	}
 }
-
-@RestController
-class UserController {
-	@GetMapping("/")
-	String getIndex(){
-		return "hello from product service";
-	}
-}

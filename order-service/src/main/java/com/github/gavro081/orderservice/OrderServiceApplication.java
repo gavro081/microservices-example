@@ -12,11 +12,3 @@ public class OrderServiceApplication {
 		SpringApplication.run(OrderServiceApplication.class, args);
 	}
 }
-
-@RestController
-class OrderController {
-	@GetMapping("/")
-	String getIndex(){
-		return "hello from order service";
-	}
-}

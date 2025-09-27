@@ -13,10 +13,3 @@ public class UserServiceApplication {
 	}
 
 }
-@RestController
-class UserController {
-	@GetMapping("/")
-	String getIndex(){
-		return "hello from user service";
-	}
-}
