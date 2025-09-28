@@ -20,11 +20,4 @@ public class OrderCreatedEvent implements Serializable {
     private final String userId;
     private final int quantity;
 
-    public OrderCreatedEvent() {
-        this.orderId = null;
-        this.productId = null;
-        this.userId = null;
-        this.quantity = 0;
-    }
-
 }

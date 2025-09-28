@@ -9,16 +9,16 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
-public class OrderEventListener {
-    private static final Logger log = LoggerFactory.getLogger(OrderEventListener.class);
+public class ProductEventListener {
+    private static final Logger log = LoggerFactory.getLogger(ProductEventListener.class);
     private final ProductService productService;
 
-    public OrderEventListener(ProductService productService) {
+    public ProductEventListener(ProductService productService) {
         this.productService = productService;
     }
 
     @RabbitListener(queues = RabbitMQConfig.PRODUCTS_QUEUE)
-    public void listen(OrderCreatedEvent orderCreatedEvent){
+    public void handleOrderCreated(OrderCreatedEvent orderCreatedEvent){
         log.info("Received OrderCreatedEvent for orderId: {}", orderCreatedEvent.getOrderId());
         try {
             productService.reserveInventory(orderCreatedEvent);

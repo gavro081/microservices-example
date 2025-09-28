@@ -10,7 +10,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter @Setter
 public class InventoryReservedEvent implements Serializable {
-    private final UUID eventId;
+    private final UUID eventId = UUID.randomUUID();
+
+    private final UUID orderId;
     private final String userId;
     private final String productId;
     private final int quantity;

@@ -78,7 +78,7 @@ public class ProductService {
 
     private void publishFailureEvent(OrderCreatedEvent orderEvent, FailureReason reason, String message){
         InventoryReservationFailedEvent failedEvent = new InventoryReservationFailedEvent(
-                orderEvent.getEventId(),
+                orderEvent.getOrderId(),
                 orderEvent.getProductId(),
                 reason,
                 message
@@ -91,7 +91,7 @@ public class ProductService {
 
     private void publishSuccessEvent(OrderCreatedEvent orderEvent, Product product){
         InventoryReservedEvent reservedEvent = new InventoryReservedEvent(
-                orderEvent.getEventId(),
+                orderEvent.getOrderId(),
                 orderEvent.getUserId(),
                 orderEvent.getProductId(),
                 orderEvent.getQuantity(),

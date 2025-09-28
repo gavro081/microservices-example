@@ -12,8 +12,10 @@ import java.util.UUID;
 @Getter
 @Setter
 public class InventoryReservationFailedEvent implements Serializable {
-    private final UUID eventId;
-    private String productId;
-    private FailureReason reason;
-    private String message;
+    private final UUID eventId = UUID.randomUUID();
+
+    private final UUID orderId;
+    private final String productId;
+    private final FailureReason reason;
+    private final String message;
 }
