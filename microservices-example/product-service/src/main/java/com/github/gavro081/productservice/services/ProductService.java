@@ -1,7 +1,7 @@
 package com.github.gavro081.productservice.services;
 
 import com.github.gavro081.common.config.RabbitMQConfig;
-import com.github.gavro081.common.enums.FailureReason;
+import com.github.gavro081.common.enums.ReservationFailureReason;
 import com.github.gavro081.common.events.InventoryReservationFailedEvent;
 import com.github.gavro081.common.events.InventoryReservedEvent;
 import com.github.gavro081.common.events.OrderCreatedEvent;
@@ -56,27 +56,23 @@ public class ProductService {
              product = getProductById(Long.parseLong(event.getProductId()));
         } catch (RuntimeException e) {
             logger.warn("Product not found for event {}. Publishing failure event.", event.getEventId());
-            publishFailureEvent(event, FailureReason.PRODUCT_NOT_FOUND, "Product could not be found");
+            publishFailureEvent(event, ReservationFailureReason.PRODUCT_NOT_FOUND, "Product could not be found");
             return;
         }
 
         if (product.getQuantity() >= event.getQuantity()){
             product.setQuantity(product.getQuantity() - event.getQuantity());
-            updateProduct(product);
+            productRepository.save(product);
             publishSuccessEvent(event, product);
         } else {
             publishFailureEvent(
                     event,
-                    FailureReason.INSUFFICIENT_STOCK,
+                    ReservationFailureReason.INSUFFICIENT_STOCK,
                     "Insufficient stock, available items: " + product.getQuantity());
         }
     }
 
-    public void updateProduct(Product product) {
-        productRepository.save(product);
-    }
-
-    private void publishFailureEvent(OrderCreatedEvent orderEvent, FailureReason reason, String message){
+    private void publishFailureEvent(OrderCreatedEvent orderEvent, ReservationFailureReason reason, String message){
         InventoryReservationFailedEvent failedEvent = new InventoryReservationFailedEvent(
                 orderEvent.getOrderId(),
                 orderEvent.getProductId(),
@@ -90,10 +86,12 @@ public class ProductService {
     }
 
     private void publishSuccessEvent(OrderCreatedEvent orderEvent, Product product){
+        // todo: replace with builder
         InventoryReservedEvent reservedEvent = new InventoryReservedEvent(
                 orderEvent.getOrderId(),
                 orderEvent.getUserId(),
                 orderEvent.getProductId(),
+                product.getName(),
                 orderEvent.getQuantity(),
                 product.getPrice(),
                 product.getPrice() * orderEvent.getQuantity()

@@ -1,7 +1,6 @@
 package com.github.gavro081.orderservice.services;
 
 import com.github.gavro081.common.config.RabbitMQConfig;
-import com.github.gavro081.common.enums.FailureReason;
 import com.github.gavro081.common.events.OrderCreatedEvent;
 import com.github.gavro081.orderservice.dao.OrderRequest;
 import com.github.gavro081.orderservice.models.Order;

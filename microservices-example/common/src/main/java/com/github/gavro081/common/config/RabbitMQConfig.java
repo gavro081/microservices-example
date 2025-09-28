@@ -1,8 +1,6 @@
 package com.github.gavro081.common.config;
 
-import com.github.gavro081.common.events.InventoryReservationFailedEvent;
-import com.github.gavro081.common.events.InventoryReservedEvent;
-import com.github.gavro081.common.events.OrderCreatedEvent;
+import com.github.gavro081.common.events.*;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
@@ -87,6 +85,8 @@ public class RabbitMQConfig {
         idClassMapping.put("com.github.gavro081.common.events.OrderCreatedEvent", OrderCreatedEvent.class);
         idClassMapping.put("com.github.gavro081.common.events.InventoryReservedEvent", InventoryReservedEvent.class);
         idClassMapping.put("com.github.gavro081.common.events.InventoryReservationFailedEvent", InventoryReservationFailedEvent.class);
+        idClassMapping.put("com.github.gavro081.common.events.BalanceDebitedEvent", BalanceDebitedEvent.class);
+        idClassMapping.put("com.github.gavro081.common.events.BalanceDebitFailedEvent", BalanceDebitFailedEvent.class);
 
         classMapper.setIdClassMapping(idClassMapping);
         converter.setClassMapper(classMapper);
