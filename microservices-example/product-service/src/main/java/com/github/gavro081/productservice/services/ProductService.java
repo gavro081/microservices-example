@@ -122,4 +122,8 @@ public class ProductService {
                 "inventory.reserved",
                 reservedEvent);
     }
+
+    public Product getProductByName(String name) {
+        return productRepository.findByName(name);
+    }
 }

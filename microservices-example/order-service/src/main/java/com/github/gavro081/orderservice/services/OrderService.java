@@ -1,6 +1,8 @@
 package com.github.gavro081.orderservice.services;
 
 import com.github.gavro081.common.config.RabbitMQConfig;
+import com.github.gavro081.common.dto.ProductDetailDto;
+import com.github.gavro081.common.dto.UserDetailDto;
 import com.github.gavro081.common.events.OrderCreatedEvent;
 import com.github.gavro081.orderservice.dao.OrderRequest;
 import com.github.gavro081.orderservice.models.Order;
@@ -10,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,10 +22,12 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final RabbitTemplate rabbitTemplate;
     private final Logger logger = LoggerFactory.getLogger(OrderService.class);
+    private final WebClient.Builder webClientBuilder;
 
-    public OrderService(OrderRepository orderRepository, RabbitTemplate rabbitTemplate) {
+    public OrderService(OrderRepository orderRepository, RabbitTemplate rabbitTemplate, WebClient.Builder webClientBuilder) {
         this.orderRepository = orderRepository;
         this.rabbitTemplate = rabbitTemplate;
+        this.webClientBuilder = webClientBuilder;
     }
 
     private Order getOrderById(UUID orderId) {
@@ -37,11 +42,18 @@ public class OrderService {
     }
 
     public void createOrder(OrderRequest orderRequest){
-        Long userId = getUserIdFromUsername(orderRequest.username());
-        Long productId = getProductIdFromProductName(orderRequest.productName());
+        UserDetailDto userDto = getUserIdFromUsername(orderRequest.username());
+        ProductDetailDto productDto = getProductIdFromProductName(orderRequest.productName());
+
+        if (userDto == null || productDto == null) {
+            // todo: add better error handling
+            logger.error("User or product not found, cannot create order.");
+            return;
+        }
+
         Order newOrder = Order.builder()
-                .userId(userId)
-                .productId(productId)
+                .userId(userDto.id())
+                .productId(productDto.id())
                 .quantity(Integer.parseInt(orderRequest.quantity()))
                 .status(OrderStatus.PENDING)
                 .build();
@@ -76,13 +88,22 @@ public class OrderService {
         }
     }
 
-    private Long getProductIdFromProductName(String productName) {
-        // todo: implement a call to users service
-        return 5L;
+    private ProductDetailDto getProductIdFromProductName(String productName) {
+        // todo: service discovery ? or something else, but dont hardcode the uri
+        return webClientBuilder.build().get()
+                .uri("http://localhost:8081/products/by-name/{name}", productName)
+                .retrieve()
+                .bodyToMono(ProductDetailDto.class)
+                .block();
     }
 
-    private Long getUserIdFromUsername(String username) {
-        // todo: implement a call to products service
-        return 1L;
+    private UserDetailDto getUserIdFromUsername(String username) {
+        // todo: service discovery ? or something else, but dont hardcode the uri
+        // read what exactly each of these do
+        return webClientBuilder.build().get()
+                .uri("http://localhost:8082/users/by-username/{username}", username)
+                .retrieve()
+                .bodyToMono(UserDetailDto.class)
+                .block();
     }
 }

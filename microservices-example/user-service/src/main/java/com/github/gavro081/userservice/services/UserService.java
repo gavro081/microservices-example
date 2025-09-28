@@ -100,4 +100,8 @@ public class UserService {
         );
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "balance.success", newEvent);
     }
+
+    public User getUserByUsername(String name) {
+        return userRepository.findByUsername(name);
+    }
 }

@@ -7,14 +7,12 @@ import jakarta.validation.Valid;
 import org.apache.coyote.Response;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/orders")
 class OrderController {
     private final OrderService orderService;
 
@@ -22,17 +20,12 @@ class OrderController {
         this.orderService = orderService;
     }
 
-    @GetMapping("/")
-    String getIndex(){
-        return "hello from order service";
-    }
-
-    @GetMapping("/orders")
+    @GetMapping()
     List<Order> getOrders(){
         return orderService.getOrders();
     }
 
-    @PostMapping("/orders")
+    @PostMapping()
     ResponseEntity<Void> postOrder(
             @Valid @RequestBody OrderRequest orderRequest) {
         orderService.createOrder(orderRequest);
