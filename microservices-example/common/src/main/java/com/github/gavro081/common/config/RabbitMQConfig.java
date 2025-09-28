@@ -59,7 +59,7 @@ public class RabbitMQConfig {
 //    orders service needs to know about all inventory and balance outcomes to finalize the order
     @Bean
     Binding ordersInventoryBinding(Queue ordersQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(ordersQueue).to(exchange).with("inventory.#");
+        return BindingBuilder.bind(ordersQueue).to(exchange).with("inventory.failed");
     }
     @Bean
     Binding ordersBalanceBinding(Queue ordersQueue, TopicExchange exchange) {

@@ -66,8 +66,14 @@ public class OrderService {
             logger.warn("Order {} not found.", orderId);
             return;
         }
-        order.setStatus(newStatus);
-        orderRepository.save(order);
+        if (order.getStatus() == OrderStatus.PENDING) {
+            order.setStatus(newStatus);
+            orderRepository.save(order);
+            logger.info("Order {} status updated to {}", orderId, newStatus);
+        } else {
+            logger.warn("Order {} already in a final state ({}). Ignoring status update to {}",
+                    orderId, order.getStatus(), newStatus);
+        }
     }
 
     private Long getProductIdFromProductName(String productName) {

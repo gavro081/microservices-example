@@ -1,6 +1,7 @@
 package com.github.gavro081.productservice.listeners;
 
 import com.github.gavro081.common.config.RabbitMQConfig;
+import com.github.gavro081.common.events.BalanceDebitFailedEvent;
 import com.github.gavro081.common.events.OrderCreatedEvent;
 import com.github.gavro081.productservice.services.ProductService;
 import org.slf4j.Logger;
@@ -29,5 +30,10 @@ public class ProductEventListener {
         }
     }
 
+    @RabbitHandler
+    public void handleBalanceDebitFailedEvent(BalanceDebitFailedEvent failedEvent){
+        log.info("Received BalanceDebitFailedEvent for orderId: {}", failedEvent.getOrderId());
+        productService.freeInventory(failedEvent);
+    }
 
 }

@@ -2,6 +2,7 @@ package com.github.gavro081.productservice.services;
 
 import com.github.gavro081.common.config.RabbitMQConfig;
 import com.github.gavro081.common.enums.ReservationFailureReason;
+import com.github.gavro081.common.events.BalanceDebitFailedEvent;
 import com.github.gavro081.common.events.InventoryReservationFailedEvent;
 import com.github.gavro081.common.events.InventoryReservedEvent;
 import com.github.gavro081.common.events.OrderCreatedEvent;
@@ -31,6 +32,9 @@ public class ProductService {
         this.rabbitTemplate = rabbitTemplate;
     }
 
+    private static final String CONTEXT_RESERVE = "INVENTORY_RESERVATION";
+    private static final String CONTEXT_RELEASE = "INVENTORY_RELEASE";
+
     public List<Product> getProducts(){
         return productRepository.findAll();
     }
@@ -45,9 +49,9 @@ public class ProductService {
     @Transactional
     public void reserveInventory(OrderCreatedEvent event){
         try {
-            processedEventService.markEventAsProcessed(event.getEventId());
-        } catch (DataIntegrityViolationException e){
-            logger.warn("Duplicate event received, ignoring. EventId: {}", event.getEventId());
+            processedEventService.markActionAsProcessed(event.getEventId(), CONTEXT_RESERVE);
+        } catch (DataIntegrityViolationException e) {
+            logger.warn("Duplicate INVENTORY_RELEASE for order {}, ignoring.", event.getOrderId());
             return;
         }
 
@@ -70,6 +74,23 @@ public class ProductService {
                     ReservationFailureReason.INSUFFICIENT_STOCK,
                     "Insufficient stock, available items: " + product.getQuantity());
         }
+    }
+
+    @Transactional
+    public void freeInventory(BalanceDebitFailedEvent failedEvent) {
+        try {
+            processedEventService.markActionAsProcessed(failedEvent.getEventId(), CONTEXT_RELEASE);
+        } catch (DataIntegrityViolationException e) {
+            logger.warn("Duplicate INVENTORY_RESERVATION for order {}, ignoring.", failedEvent.getOrderId());
+            return;
+        }
+
+        // todo: handle thrown error if product is not found
+        Product product = getProductById(Long.parseLong(failedEvent.getProductId()));
+        product.setQuantity(product.getQuantity() + failedEvent.getQuantity());
+        productRepository.save(product);
+        logger.info("Released {} items for product {} from order {}",
+                failedEvent.getQuantity(), product.getId(), failedEvent.getOrderId());
     }
 
     private void publishFailureEvent(OrderCreatedEvent orderEvent, ReservationFailureReason reason, String message){

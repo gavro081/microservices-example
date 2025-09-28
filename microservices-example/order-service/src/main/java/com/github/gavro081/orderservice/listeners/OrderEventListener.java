@@ -1,7 +1,10 @@
 package com.github.gavro081.orderservice.listeners;
 
 import com.github.gavro081.common.config.RabbitMQConfig;
+import com.github.gavro081.common.events.BalanceDebitFailedEvent;
+import com.github.gavro081.common.events.BalanceDebitedEvent;
 import com.github.gavro081.common.events.InventoryReservationFailedEvent;
+import com.github.gavro081.common.events.InventoryReservedEvent;
 import com.github.gavro081.orderservice.models.OrderStatus;
 import com.github.gavro081.orderservice.services.OrderService;
 import org.slf4j.Logger;
@@ -25,6 +28,22 @@ public class OrderEventListener {
         log.info("Received InventoryReservationFailedEvent for orderId: {}, eventId: {}",
                 failedEvent.getOrderId(), failedEvent.getEventId());
         orderService.updateOrderStatus(failedEvent.getOrderId(), OrderStatus.FAILED);
+        // todo: send status failed back to client
+    }
+
+    @RabbitHandler
+    public void handleBalanceDebitedEvent(BalanceDebitedEvent event){
+        log.info("Received BalancedDebitedEvent for orderId: {}, eventId: {}",
+                event.getOrderId(), event.getEventId());
+        orderService.updateOrderStatus(event.getOrderId(), OrderStatus.COMPLETED);
+        // todo: send status failed back to client
+    }
+
+    @RabbitHandler
+    public void handleBalanceDebitFailedEvent(BalanceDebitFailedEvent event){
+        log.info("Received BalancedDebitedEventFailed for orderId: {}, eventId: {}",
+                event.getOrderId(), event.getEventId());
+        orderService.updateOrderStatus(event.getOrderId(), OrderStatus.FAILED);
         // todo: send status failed back to client
     }
 }

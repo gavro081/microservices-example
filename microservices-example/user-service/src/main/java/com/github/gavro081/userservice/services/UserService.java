@@ -6,10 +6,13 @@ import com.github.gavro081.common.events.BalanceDebitFailedEvent;
 import com.github.gavro081.common.events.BalanceDebitedEvent;
 import com.github.gavro081.common.events.InventoryReservedEvent;
 import com.github.gavro081.userservice.models.User;
+import com.github.gavro081.userservice.repositories.ProcessedEventRepository;
 import com.github.gavro081.userservice.repositories.UserRepository;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,11 +22,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final RabbitTemplate rabbitTemplate;
+    private final ProcessedEventService processedEventService;
 
-    public UserService(UserRepository userRepository, RabbitTemplate rabbitTemplate) {
+    public UserService(UserRepository userRepository, RabbitTemplate rabbitTemplate, ProcessedEventService processedEventService) {
         this.userRepository = userRepository;
         this.rabbitTemplate = rabbitTemplate;
+        this.processedEventService = processedEventService;
     }
+
+    private static final String CONTEXT_DEBIT = "BALANCE_DEBIT";
 
     public List<User> getUsers(){
         return userRepository.findAll();
@@ -35,7 +42,15 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User " + userId + "is not found"));
     }
 
+    @Transactional
     public void debitUserBalance(InventoryReservedEvent event) {
+        try {
+            processedEventService.markActionAsProcessed(event.getOrderId(), CONTEXT_DEBIT);
+        } catch (DataIntegrityViolationException e) {
+            logger.warn("Duplicate BALANCE_DEBIT for order {}. ignoring.", event.getOrderId());
+            return;
+        }
+
         User user;
         try {
             user = getUserById(Long.parseLong(event.getUserId()));

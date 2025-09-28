@@ -1,8 +1,7 @@
-package com.github.gavro081.productservice.services;
+package com.github.gavro081.userservice.services;
 
-import com.github.gavro081.productservice.models.ProcessedEvent;
-import com.github.gavro081.productservice.models.ProcessedEventId;
-import com.github.gavro081.productservice.repositories.ProcessedEventRepository;
+import com.github.gavro081.userservice.models.ProcessedEvent;
+import com.github.gavro081.userservice.repositories.ProcessedEventRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
