@@ -11,5 +11,12 @@ public class UserServiceApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(UserServiceApplication.class, args);
 	}
+}
 
+@RestController
+class IndexController{
+	@GetMapping("/")
+	String getIndex(){
+		return "hello from user service";
+	}
 }

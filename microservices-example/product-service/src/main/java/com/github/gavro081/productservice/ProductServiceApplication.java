@@ -12,3 +12,11 @@ public class ProductServiceApplication {
 		SpringApplication.run(ProductServiceApplication.class, args);
 	}
 }
+
+@RestController
+class IndexController{
+	@GetMapping("/")
+	String getIndex(){
+		return "hello from product service";
+	}
+}
