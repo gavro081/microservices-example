@@ -49,7 +49,7 @@ public class OrderService {
 
     private Long getProductIdFromProductName(String productName) {
         // todo: implement a call to users service
-        return 1L;
+        return 5L;
     }
 
     private Long getUserIdFromUsername(String username) {
