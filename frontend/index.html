@@ -5,6 +5,8 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Frontend Client</title>
 		<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+		<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 	</head>
 	<body>
 		<div>
@@ -46,21 +48,39 @@
 						min="1"
 					/>
 				</div>
-				<button id="submitBtn" class="bg-gray-300 p-2 rounded-md mt-4">
+				<button
+					id="submitBtn"
+					class="bg-gray-300 p-2 rounded-md mt-4 cursor-pointer"
+				>
 					Submit
 				</button>
 			</form>
 		</div>
+
+		<div>
+			<p>Order status: <span id="orderStatus">None</span></p>
+		</div>
 	</body>
 	<script>
+		let stompClient = null;
 		const usernameField = document.querySelector("#username");
 		const productField = document.querySelector("#product");
 		const quantityField = document.querySelector("#quantity");
+		const orderStatus = document.querySelector("#orderStatus");
 		const form = document.querySelector("#orderForm");
+		const submitBtn = document.querySelector("#submitBtn");
 
 		const submitForm = async (e) => {
 			e.preventDefault();
+			submitBtn.disabled = true;
+			orderStatus.innerText = "Placing order";
+			const username = usernameField.value;
+			connectAndSubscribe(username);
+			await sendOrderRequest();
+			submitBtn.disabled = false;
+		};
 
+		const sendOrderRequest = async () => {
 			const username = usernameField.value;
 			const productName = productField.value;
 			const quantity = quantityField.value;
@@ -82,12 +102,34 @@
 					throw new Error("response status: ", response.status);
 				}
 				const res = await response.json();
-				console.log(res);
+				orderStatus.innerText = "Order placed";
 			} catch (err) {
 				console.error(err);
 			}
 		};
 
 		form.addEventListener("submit", submitForm);
+
+		const connectAndSubscribe = (username) => {
+			// check port
+			const socket = new SockJS("http://localhost:8083/ws");
+			stompClient = Stomp.over(socket);
+
+			stompClient.connect({}, (frame) => {
+				const subscriptionUrl = "/topic/order-status/" + username;
+
+				stompClient.subscribe(subscriptionUrl, (message) => {
+					const update = JSON.parse(message.body);
+					console.log("received message", update);
+					orderStatus.innerText = update.status;
+
+					if (update.status == "COMPLETED" || update.status == "FAILED") {
+						stompClient.disconnect(() => {
+							console.log("disconnected");
+						});
+					}
+				});
+			});
+		};
 	</script>
 </html>

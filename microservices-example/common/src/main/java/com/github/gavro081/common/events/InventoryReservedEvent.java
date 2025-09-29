@@ -19,4 +19,5 @@ public class InventoryReservedEvent implements Serializable {
     private final int quantity;
     private final double unitPrice;
     private final double totalPrice;
+    private final String username;
 }

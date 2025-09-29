@@ -98,7 +98,8 @@ public class ProductService {
                 orderEvent.getOrderId(),
                 orderEvent.getProductId(),
                 reason,
-                message
+                message,
+                orderEvent.getUsername()
         );
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE_NAME,
@@ -115,7 +116,8 @@ public class ProductService {
                 product.getName(),
                 orderEvent.getQuantity(),
                 product.getPrice(),
-                product.getPrice() * orderEvent.getQuantity()
+                product.getPrice() * orderEvent.getQuantity(),
+                orderEvent.getUsername()
         );
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE_NAME,

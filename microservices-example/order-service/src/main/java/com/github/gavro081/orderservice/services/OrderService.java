@@ -23,11 +23,16 @@ public class OrderService {
     private final RabbitTemplate rabbitTemplate;
     private final Logger logger = LoggerFactory.getLogger(OrderService.class);
     private final WebClient.Builder webClientBuilder;
+    private final NotificationService notificationService;
 
-    public OrderService(OrderRepository orderRepository, RabbitTemplate rabbitTemplate, WebClient.Builder webClientBuilder) {
+    public OrderService(OrderRepository orderRepository,
+                        RabbitTemplate rabbitTemplate,
+                        WebClient.Builder webClientBuilder,
+                        NotificationService notificationService) {
         this.orderRepository = orderRepository;
         this.rabbitTemplate = rabbitTemplate;
         this.webClientBuilder = webClientBuilder;
+        this.notificationService = notificationService;
     }
 
     private Order getOrderById(UUID orderId) {
@@ -41,14 +46,14 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
-    public void createOrder(OrderRequest orderRequest){
+    public UUID createOrder(OrderRequest orderRequest){
         UserDetailDto userDto = getUserIdFromUsername(orderRequest.username());
         ProductDetailDto productDto = getProductIdFromProductName(orderRequest.productName());
 
         if (userDto == null || productDto == null) {
             // todo: add better error handling
             logger.error("User or product not found, cannot create order.");
-            return;
+            return null;
         }
 
         Order newOrder = Order.builder()
@@ -64,13 +69,14 @@ public class OrderService {
                 savedOrder.getId(),
                 savedOrder.getProductId().toString(),
                 savedOrder.getUserId().toString(),
-                savedOrder.getQuantity()
+                savedOrder.getQuantity(),
+                orderRequest.username()
         );
-
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.created", event);
+        return savedOrder.getId();
     }
 
-    public void updateOrderStatus(UUID orderId, OrderStatus newStatus){
+    public void updateOrderStatus(String username, UUID orderId, OrderStatus newStatus) {
         Order order;
         try {
              order = getOrderById(orderId);
@@ -82,6 +88,7 @@ public class OrderService {
             order.setStatus(newStatus);
             orderRepository.save(order);
             logger.info("Order {} status updated to {}", orderId, newStatus);
+            notificationService.notifyOrderStatusUpdate(username, orderId, newStatus);
         } else {
             logger.warn("Order {} already in a final state ({}). Ignoring status update to {}",
                     orderId, order.getStatus(), newStatus);

@@ -19,5 +19,6 @@ public class OrderCreatedEvent implements Serializable {
     private final String productId;
     private final String userId;
     private final int quantity;
+    private final String username;
 
 }

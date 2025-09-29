@@ -17,4 +17,5 @@ public class BalanceDebitFailedEvent implements Serializable {
         private final int quantity;
         private final DebitFailureReason reason;
         private final String message;
+        private final String username;
 }

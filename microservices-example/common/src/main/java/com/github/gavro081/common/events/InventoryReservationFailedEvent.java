@@ -16,4 +16,5 @@ public class InventoryReservationFailedEvent implements Serializable {
     private final String productId;
     private final ReservationFailureReason reason;
     private final String message;
+    private final String username;
 }

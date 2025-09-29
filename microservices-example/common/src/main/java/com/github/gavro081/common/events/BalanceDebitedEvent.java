@@ -15,4 +15,5 @@ public class BalanceDebitedEvent {
     private final String productId;
     private final double totalPrice;
     private final String productName;
+    private final String username;
 }

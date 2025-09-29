@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/orders")
@@ -26,10 +27,12 @@ class OrderController {
     }
 
     @PostMapping()
-    ResponseEntity<Void> postOrder(
+    ResponseEntity<UUID> postOrder(
             @Valid @RequestBody OrderRequest orderRequest) {
-        orderService.createOrder(orderRequest);
-        return ResponseEntity.accepted().build();
+        UUID orderId = orderService.createOrder(orderRequest);
+        if (orderId == null)
+            return ResponseEntity.badRequest().build();
+        return ResponseEntity.accepted().body(orderId);
     }
 
 }

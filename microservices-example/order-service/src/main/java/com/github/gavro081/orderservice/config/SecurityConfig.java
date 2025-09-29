@@ -20,9 +20,10 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(request -> {
                     var corsConfig = new CorsConfiguration();
-                    corsConfig.setAllowedOrigins(List.of("*"));
+                    corsConfig.setAllowedOrigins(List.of("http://127.0.0.1:5500"));
                     corsConfig.setAllowedMethods(List.of("*"));
                     corsConfig.setAllowedHeaders(List.of("*"));
+                    corsConfig.setAllowCredentials(true);
                     return corsConfig;
         }));
 

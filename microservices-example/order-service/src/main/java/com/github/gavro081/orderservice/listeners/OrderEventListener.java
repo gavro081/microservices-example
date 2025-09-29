@@ -27,7 +27,7 @@ public class OrderEventListener {
     public void handleInventoryReservationFailed(InventoryReservationFailedEvent failedEvent){
         log.info("Received InventoryReservationFailedEvent for orderId: {}, eventId: {}",
                 failedEvent.getOrderId(), failedEvent.getEventId());
-        orderService.updateOrderStatus(failedEvent.getOrderId(), OrderStatus.FAILED);
+        orderService.updateOrderStatus(failedEvent.getUsername(), failedEvent.getOrderId(), OrderStatus.FAILED);
         // todo: send status failed back to client
     }
 
@@ -35,7 +35,7 @@ public class OrderEventListener {
     public void handleBalanceDebitedEvent(BalanceDebitedEvent event){
         log.info("Received BalancedDebitedEvent for orderId: {}, eventId: {}",
                 event.getOrderId(), event.getEventId());
-        orderService.updateOrderStatus(event.getOrderId(), OrderStatus.COMPLETED);
+        orderService.updateOrderStatus(event.getUsername(), event.getOrderId(), OrderStatus.COMPLETED);
         // todo: send status failed back to client
     }
 
@@ -43,7 +43,7 @@ public class OrderEventListener {
     public void handleBalanceDebitFailedEvent(BalanceDebitFailedEvent event){
         log.info("Received BalancedDebitedEventFailed for orderId: {}, eventId: {}",
                 event.getOrderId(), event.getEventId());
-        orderService.updateOrderStatus(event.getOrderId(), OrderStatus.FAILED);
+        orderService.updateOrderStatus(event.getUsername(),event.getOrderId(), OrderStatus.FAILED);
         // todo: send status failed back to client
     }
 }

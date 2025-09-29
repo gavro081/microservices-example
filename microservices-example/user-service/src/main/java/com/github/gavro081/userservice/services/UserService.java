@@ -85,7 +85,8 @@ public class UserService {
                 event.getProductId(),
                 event.getQuantity(),
                 reason,
-                message
+                message,
+                event.getUsername()
         );
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "balance.failed", failedEvent);
     }
@@ -96,7 +97,8 @@ public class UserService {
                 user.getId(),
                 event.getProductId(),
                 event.getTotalPrice(),
-                event.getProductName()
+                event.getProductName(),
+                event.getUsername()
         );
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "balance.success", newEvent);
     }
