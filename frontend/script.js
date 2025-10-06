@@ -46,7 +46,15 @@ const sendOrderRequest = async () => {
 		const res = await response.json();
 		orderStatus.innerText = "Order placed";
 	} catch (err) {
+		orderStatus.innerText = "Order failed";
 		console.error(err);
+
+		// Disconnect from WebSocket if there's an error
+		if (stompClient && stompClient.connected) {
+			stompClient.disconnect(() => {
+				console.log("disconnected due to error");
+			});
+		}
 	}
 };
 

@@ -21,7 +21,7 @@ public class UserEventListener {
 
     @RabbitHandler
     public void handleInventoryReservedEvent(InventoryReservedEvent event){
-        log.info("Received InventoryReservationFailedEvent for orderId: {}, eventId: {}",
+        log.info("Received InventoryReservedEvent for orderId: {}, eventId: {}",
                 event.getOrderId(), event.getEventId());
         userService.debitUserBalance(event);
     }

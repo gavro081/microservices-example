@@ -11,8 +11,10 @@ import com.github.gavro081.orderservice.repositories.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import java.time.Instant;
 import java.util.List;
@@ -102,6 +104,7 @@ public class OrderService {
         return webClientBuilder.build().get()
                 .uri("http://localhost:8081/products/by-name/{name}", productName)
                 .retrieve()
+                .onStatus(HttpStatus.NOT_FOUND::equals, response -> Mono.empty())
                 .bodyToMono(ProductDetailDto.class)
                 .block();
     }
@@ -112,6 +115,7 @@ public class OrderService {
         return webClientBuilder.build().get()
                 .uri("http://localhost:8082/users/by-username/{username}", username)
                 .retrieve()
+                .onStatus(HttpStatus.NOT_FOUND::equals, response -> Mono.empty())
                 .bodyToMono(UserDetailDto.class)
                 .block();
     }
