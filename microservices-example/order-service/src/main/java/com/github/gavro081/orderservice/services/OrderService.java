@@ -11,6 +11,7 @@ import com.github.gavro081.orderservice.repositories.OrderRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -27,6 +28,10 @@ public class OrderService {
     private final Logger logger = LoggerFactory.getLogger(OrderService.class);
     private final WebClient.Builder webClientBuilder;
     private final NotificationService notificationService;
+    @Value("${microservices.product-service.url}")
+    private String productServiceUrl;
+    @Value("${microservices.user-service.url}")
+    private String userServiceUrl;
 
     public OrderService(OrderRepository orderRepository,
                         RabbitTemplate rabbitTemplate,
@@ -107,8 +112,9 @@ public class OrderService {
 
     private ProductDetailDto getProductIdFromProductName(String productName) throws Exception {
         // todo: service discovery ? or something else, but dont hardcode the uri
+        String url = productServiceUrl + "/products/by-name/{name}";
         return webClientBuilder.build().get()
-                .uri("http://localhost:8081/products/by-name/{name}", productName)
+                .uri(url, productName)
                 .retrieve()
                 .onStatus(HttpStatus.NOT_FOUND::equals, response -> Mono.empty())
                 .bodyToMono(ProductDetailDto.class)
@@ -118,8 +124,9 @@ public class OrderService {
     private UserDetailDto getUserIdFromUsername(String username) throws Exception {
         // todo: service discovery ? or something else, but dont hardcode the uri
         // read what exactly each of these do
+        String url = userServiceUrl + "/users/by-username/{username}";
         return webClientBuilder.build().get()
-                .uri("http://localhost:8082/users/by-username/{username}", username)
+                .uri(url, username)
                 .retrieve()
                 .onStatus(HttpStatus.NOT_FOUND::equals, response -> Mono.empty())
                 .bodyToMono(UserDetailDto.class)
