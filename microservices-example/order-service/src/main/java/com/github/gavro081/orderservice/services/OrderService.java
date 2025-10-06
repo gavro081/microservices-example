@@ -50,8 +50,14 @@ public class OrderService {
     }
 
     public UUID createOrder(OrderRequest orderRequest){
-        UserDetailDto userDto = getUserIdFromUsername(orderRequest.username());
-        ProductDetailDto productDto = getProductIdFromProductName(orderRequest.productName());
+        UserDetailDto userDto;
+        ProductDetailDto productDto;
+        try {
+            userDto = getUserIdFromUsername(orderRequest.username());
+            productDto = getProductIdFromProductName(orderRequest.productName());
+        } catch (Exception e) {
+            return null;
+        }
 
         if (userDto == null || productDto == null) {
             // todo: add better error handling
@@ -99,7 +105,7 @@ public class OrderService {
         }
     }
 
-    private ProductDetailDto getProductIdFromProductName(String productName) {
+    private ProductDetailDto getProductIdFromProductName(String productName) throws Exception {
         // todo: service discovery ? or something else, but dont hardcode the uri
         return webClientBuilder.build().get()
                 .uri("http://localhost:8081/products/by-name/{name}", productName)
@@ -109,7 +115,7 @@ public class OrderService {
                 .block();
     }
 
-    private UserDetailDto getUserIdFromUsername(String username) {
+    private UserDetailDto getUserIdFromUsername(String username) throws Exception {
         // todo: service discovery ? or something else, but dont hardcode the uri
         // read what exactly each of these do
         return webClientBuilder.build().get()
@@ -118,6 +124,7 @@ public class OrderService {
                 .onStatus(HttpStatus.NOT_FOUND::equals, response -> Mono.empty())
                 .bodyToMono(UserDetailDto.class)
                 .block();
+
     }
 
     public Order getLastOrder() {
