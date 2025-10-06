@@ -1,10 +1,7 @@
 package com.github.gavro081.common.config;
 
 import com.github.gavro081.common.events.*;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.support.converter.DefaultClassMapper;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
@@ -17,9 +14,12 @@ import java.util.Map;
 @Configuration
 public class RabbitMQConfig {
     public static final String EXCHANGE_NAME = "order_events_exchange";
+    public static final String DEAD_LETTER_EXCHANGE = "dead_letter_exchange";
+
     public static final String ORDERS_QUEUE = "orders_queue";
     public static final String PRODUCTS_QUEUE = "products_queue";
     public static final String USERS_QUEUE = "users_queue";
+    public static final String PRODUCTS_QUEUE_DLQ = "products_queue_dlq";
 
 //    Exchange: The central "post office" where you send all order-related events.
 //    Queue: A specific "mailbox" for a service.
@@ -31,17 +31,30 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    TopicExchange deadLetterExchange(){
+        return new TopicExchange(DEAD_LETTER_EXCHANGE);
+    }
+
+    @Bean
     Queue ordersQueue(){
         return new Queue(ORDERS_QUEUE, true);
     }
 
     @Bean
     Queue productsQueue(){
-        return new Queue(PRODUCTS_QUEUE, true);
+        return QueueBuilder.durable(PRODUCTS_QUEUE)
+                .withArgument("x-dead-letter-exchange", DEAD_LETTER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", "dlq.products")
+                .build();
     }
     @Bean
     Queue usersQueue(){
         return new Queue(USERS_QUEUE, true);
+    }
+
+    @Bean
+    Queue productsDlq(){
+        return new Queue(PRODUCTS_QUEUE_DLQ);
     }
 
     @Bean
@@ -70,6 +83,11 @@ public class RabbitMQConfig {
     Binding productsCompensationBinding(Queue productsQueue, TopicExchange exchange) {
 //     products-service needs to know about payment failure to compensate
         return BindingBuilder.bind(productsQueue).to(exchange).with("balance.failed");
+    }
+
+    @Bean
+    Binding productsDlqBinding(Queue productsDlq, TopicExchange deadLetterExchange) {
+        return BindingBuilder.bind(productsDlq).to(deadLetterExchange).with("#");
     }
 
     @Bean
