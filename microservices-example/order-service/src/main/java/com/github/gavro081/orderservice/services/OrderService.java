@@ -14,6 +14,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -86,6 +87,7 @@ public class OrderService {
         }
         if (order.getStatus() == OrderStatus.PENDING) {
             order.setStatus(newStatus);
+            order.setTimestamp(Instant.now());
             orderRepository.save(order);
             logger.info("Order {} status updated to {}", orderId, newStatus);
             notificationService.notifyOrderStatusUpdate(username, orderId, newStatus);
@@ -112,5 +114,9 @@ public class OrderService {
                 .retrieve()
                 .bodyToMono(UserDetailDto.class)
                 .block();
+    }
+
+    public Order getLastOrder() {
+        return orderRepository.findTopByTimestampIsNotNullOrderByTimestampDesc();
     }
 }

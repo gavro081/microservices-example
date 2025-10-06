@@ -35,4 +35,11 @@ class OrderController {
         return ResponseEntity.accepted().body(orderId);
     }
 
+    @GetMapping("/last")
+    ResponseEntity<Order> getLastOrder(){
+        Order order = orderService.getLastOrder();
+        return ResponseEntity.ok(order);
+    }
+
+
 }

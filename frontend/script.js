@@ -9,6 +9,8 @@ const productTable = document.querySelector("#product-table");
 const productTableBody = document.querySelector("#product-table-body");
 const usersTable = document.querySelector("#product-table");
 const usersTableBody = document.querySelector("#users-table-body");
+const ordersTable = document.querySelector("#orders-table");
+const ordersTableBody = document.querySelector("#orders-table-body");
 
 const submitForm = async (e) => {
 	e.preventDefault();
@@ -76,6 +78,7 @@ const connectAndSubscribe = (username) => {
 const loadView = async () => {
 	productTableBody.innerHTML = "";
 	usersTableBody.innerHTML = "";
+	ordersTableBody.innerHTML = "";
 	try {
 		const response = await fetch("http://localhost:8081/products");
 		const data = await response.json();
@@ -90,6 +93,15 @@ const loadView = async () => {
 		const data = await response.json();
 		// id, username, balance
 		renderUsersTable(data);
+	} catch (err) {
+		console.error("error: ", err);
+		return;
+	}
+	try {
+		const response = await fetch("http://localhost:8083/orders/last");
+		const data = await response.json();
+		// id, userId, productId, quantity, status, timestamp
+		renderOrderTable(data);
 	} catch (err) {
 		console.error("error: ", err);
 		return;
@@ -119,6 +131,18 @@ const renderUsersTable = (users) => {
         `;
 		usersTableBody.appendChild(tr);
 	});
+};
+
+const renderOrderTable = (order) => {
+	const tr = document.createElement("tr");
+	tr.innerHTML = `
+        <td>${order.userId}</td>
+        <td>${order.productId}</td>
+        <td>${order.quantity}</td>
+        <td>${order.status}</td>
+        <td>${order.timestamp}</td>
+        `;
+	ordersTableBody.appendChild(tr);
 };
 
 loadView();
