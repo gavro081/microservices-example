@@ -9,8 +9,8 @@
 		<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 	</head>
 	<body>
-		<div>
-			<form class="w-80 ml-4 mt-4" id="orderForm">
+		<div class="flex gap-8 p-4">
+			<form class="w-80" id="orderForm">
 				<div>
 					<label for="username" class="block text-sm font-medium text-gray-700"
 						>Username</label
@@ -55,81 +55,44 @@
 					Submit
 				</button>
 			</form>
+			<div id="tables-wrapper" style="display: none; gap: 20px">
+				<div>
+					<p class="font-bold text-lg text-gray-700 pb-3">products table</p>
+					<table
+						id="product-table"
+						class="border-collapse border border-gray-300 bg-white shadow-sm bg-gray-50 [&_th,td]:border [&_th,td]:border-gray-300 [&_th,td]:px-4 [&_th,td]:py-2 [&_th,td]:text-gray-700"
+					>
+						<thead>
+							<tr>
+								<th>Name</th>
+								<th>Price</th>
+								<th>Quantity</th>
+								<th>Category</th>
+							</tr>
+						</thead>
+						<tbody id="product-table-body"></tbody>
+					</table>
+				</div>
+				<div>
+					<p class="font-bold text-lg text-gray-700 pb-3">users table</p>
+					<table
+						id="users-table"
+						class="border-collapse border border-gray-300 bg-white shadow-sm bg-gray-50 [&_th,td]:border [&_th,td]:border-gray-300 [&_th,td]:px-4 [&_th,td]:py-2 [&_th,td]:text-gray-700"
+					>
+						<thead>
+							<tr>
+								<th>Username</th>
+								<th>Balance</th>
+							</tr>
+						</thead>
+						<tbody id="users-table-body"></tbody>
+					</table>
+				</div>
+			</div>
 		</div>
-
 		<div>
 			<p>Order status: <span id="orderStatus">None</span></p>
 		</div>
 	</body>
-	<script>
-		let stompClient = null;
-		const usernameField = document.querySelector("#username");
-		const productField = document.querySelector("#product");
-		const quantityField = document.querySelector("#quantity");
-		const orderStatus = document.querySelector("#orderStatus");
-		const form = document.querySelector("#orderForm");
-		const submitBtn = document.querySelector("#submitBtn");
-
-		const submitForm = async (e) => {
-			e.preventDefault();
-			submitBtn.disabled = true;
-			orderStatus.innerText = "Placing order";
-			const username = usernameField.value;
-			connectAndSubscribe(username);
-			await sendOrderRequest();
-			submitBtn.disabled = false;
-		};
-
-		const sendOrderRequest = async () => {
-			const username = usernameField.value;
-			const productName = productField.value;
-			const quantity = quantityField.value;
-
-			const payload = {
-				username,
-				productName,
-				quantity,
-			};
-
-			// todo add api gateway to backend
-			try {
-				const response = await fetch("http://localhost:8083/orders", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(payload),
-				});
-				if (!response.ok) {
-					throw new Error("response status: ", response.status);
-				}
-				const res = await response.json();
-				orderStatus.innerText = "Order placed";
-			} catch (err) {
-				console.error(err);
-			}
-		};
-
-		form.addEventListener("submit", submitForm);
-
-		const connectAndSubscribe = (username) => {
-			// check port
-			const socket = new SockJS("http://localhost:8083/ws");
-			stompClient = Stomp.over(socket);
-
-			stompClient.connect({}, (frame) => {
-				const subscriptionUrl = "/topic/order-status/" + username;
-
-				stompClient.subscribe(subscriptionUrl, (message) => {
-					const update = JSON.parse(message.body);
-					console.log("received message", update);
-					orderStatus.innerText = update.status;
-
-					if (update.status == "COMPLETED" || update.status == "FAILED") {
-						stompClient.disconnect(() => {
-							console.log("disconnected");
-						});
-					}
-				});
-			});
-		};
-	</script>
+	<script src="script.js"></script>
 </html>

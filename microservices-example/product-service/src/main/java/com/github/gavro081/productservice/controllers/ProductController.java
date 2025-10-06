@@ -1,5 +1,6 @@
 package com.github.gavro081.productservice.controllers;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.github.gavro081.common.dto.ProductDetailDto;
@@ -23,7 +24,7 @@ public class ProductController {
 
     @GetMapping()
     List<Product> getProducts(){
-        return productService.getProducts();
+    return productService.getProducts();
     }
 
     @GetMapping("/by-name/{name}")
