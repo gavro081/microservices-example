@@ -87,6 +87,7 @@ let loadViewTimeout = null;
 
 const loadView = async () => {
 	if (loadViewTimeout) {
+		console.log(4);
 		clearTimeout(loadViewTimeout);
 		loadViewTimeout = null;
 	}
@@ -98,6 +99,7 @@ const loadView = async () => {
 		const response = await fetch("http://localhost:8081/products");
 		const data = await response.json();
 		renderProductsTable(data);
+		console.log(data);
 	} catch (err) {
 		console.error("error: ", err);
 		loadViewTimeout = setTimeout(loadView, 3000);
@@ -107,6 +109,7 @@ const loadView = async () => {
 		const response = await fetch("http://localhost:8082/users");
 		const data = await response.json();
 		renderUsersTable(data);
+		console.log(data);
 	} catch (err) {
 		console.error("error: ", err);
 		loadViewTimeout = setTimeout(loadView, 3000);
@@ -115,11 +118,10 @@ const loadView = async () => {
 	try {
 		const response = await fetch("http://localhost:8083/orders/last");
 		const data = await response.json();
+		console.log(data);
 		renderOrderTable(data);
 	} catch (err) {
 		console.error("error: ", err);
-		loadViewTimeout = setTimeout(loadView, 3000);
-		return;
 	}
 	document.querySelector("#tables-wrapper").style.display = "flex";
 };
