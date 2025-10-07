@@ -83,35 +83,42 @@ const connectAndSubscribe = (username) => {
 	});
 };
 
+let loadViewTimeout = null;
+
 const loadView = async () => {
+	if (loadViewTimeout) {
+		clearTimeout(loadViewTimeout);
+		loadViewTimeout = null;
+	}
+
 	productTableBody.innerHTML = "";
 	usersTableBody.innerHTML = "";
 	ordersTableBody.innerHTML = "";
 	try {
 		const response = await fetch("http://localhost:8081/products");
 		const data = await response.json();
-		// id, name, category, price, quantity
 		renderProductsTable(data);
 	} catch (err) {
 		console.error("error: ", err);
+		loadViewTimeout = setTimeout(loadView, 3000);
 		return;
 	}
 	try {
 		const response = await fetch("http://localhost:8082/users");
 		const data = await response.json();
-		// id, username, balance
 		renderUsersTable(data);
 	} catch (err) {
 		console.error("error: ", err);
+		loadViewTimeout = setTimeout(loadView, 3000);
 		return;
 	}
 	try {
 		const response = await fetch("http://localhost:8083/orders/last");
 		const data = await response.json();
-		// id, userId, productId, quantity, status, timestamp
 		renderOrderTable(data);
 	} catch (err) {
 		console.error("error: ", err);
+		loadViewTimeout = setTimeout(loadView, 3000);
 		return;
 	}
 	document.querySelector("#tables-wrapper").style.display = "flex";
