@@ -33,9 +33,8 @@ const sendOrderRequest = async () => {
 		quantity,
 	};
 
-	// todo add api gateway to backend
 	try {
-		const response = await fetch("http://localhost:8083/orders", {
+		const response = await fetch("http://localhost:8080/api/orders", {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),
@@ -49,7 +48,6 @@ const sendOrderRequest = async () => {
 		orderStatus.innerText = "Order failed";
 		console.error(err);
 
-		// Disconnect from WebSocket if there's an error
 		if (stompClient && stompClient.connected) {
 			stompClient.disconnect(() => {
 				console.log("disconnected due to error");
@@ -61,7 +59,7 @@ const sendOrderRequest = async () => {
 form.addEventListener("submit", submitForm);
 
 const connectAndSubscribe = (username) => {
-	// check port
+	// gateway doesn't proxy websocket connections by default
 	const socket = new SockJS("http://localhost:8083/ws");
 	stompClient = Stomp.over(socket);
 
@@ -96,7 +94,7 @@ const loadView = async () => {
 	usersTableBody.innerHTML = "";
 	ordersTableBody.innerHTML = "";
 	try {
-		const response = await fetch("http://localhost:8081/products");
+		const response = await fetch("http://localhost:8080/api/products");
 		const data = await response.json();
 		renderProductsTable(data);
 		console.log(data);
@@ -106,7 +104,7 @@ const loadView = async () => {
 		return;
 	}
 	try {
-		const response = await fetch("http://localhost:8082/users");
+		const response = await fetch("http://localhost:8080/api/users");
 		const data = await response.json();
 		renderUsersTable(data);
 		console.log(data);
@@ -116,7 +114,7 @@ const loadView = async () => {
 		return;
 	}
 	try {
-		const response = await fetch("http://localhost:8083/orders/last");
+		const response = await fetch("http://localhost:8080/api/orders/last");
 		const data = await response.json();
 		console.log(data);
 		renderOrderTable(data);
