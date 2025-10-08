@@ -12,6 +12,24 @@ services:
     networks:
       - microservices-network
 
+  eureka-server:
+    build:
+      context: .
+      dockerfile: ./eureka-server/Dockerfile
+    container_name: eureka-server
+    hostname: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - microservices-network
+    healthcheck:
+      test:
+        ["CMD-SHELL", "curl -f http://localhost:8761/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
   user-db:
     image: postgres:16-alpine
     container_name: user-db
@@ -88,11 +106,14 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=guest
       - SPRING_RABBITMQ_PASSWORD=guest
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
       user-db:
         condition: service_healthy
       rabbitmq:
         condition: service_started
+      eureka-server:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -112,11 +133,14 @@ services:
       - SPRING_RABBITMQ_PORT=5672
       - SPRING_RABBITMQ_USERNAME=guest
       - SPRING_RABBITMQ_PASSWORD=guest
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
       product-db:
         condition: service_healthy
       rabbitmq:
         condition: service_started
+      eureka-server:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -138,14 +162,39 @@ services:
       - SPRING_RABBITMQ_PASSWORD=guest
       - MICROSERVICES_PRODUCT_SERVICE_URL=http://product-service:8081
       - MICROSERVICES_USER_SERVICE_URL=http://user-service:8082
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     depends_on:
       order-db:
         condition: service_healthy
       rabbitmq:
         condition: service_started
+      eureka-server:
+        condition: service_healthy
       product-service:
         condition: service_started
       user-service:
+        condition: service_started
+    networks:
+      - microservices-network
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./api-gateway/Dockerfile
+    container_name: api-gateway
+    hostname: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      user-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      order-service:
         condition: service_started
     networks:
       - microservices-network
