@@ -1,12 +1,14 @@
 package com.github.gavro081.common.events;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 import java.util.UUID;
 
 @AllArgsConstructor
 @Getter
+@Builder
 public class BalanceDebitedEvent {
     private final UUID eventId = UUID.randomUUID();
 

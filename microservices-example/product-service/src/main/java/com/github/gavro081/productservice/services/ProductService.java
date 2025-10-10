@@ -6,6 +6,7 @@ import com.github.gavro081.common.events.BalanceDebitFailedEvent;
 import com.github.gavro081.common.events.InventoryReservationFailedEvent;
 import com.github.gavro081.common.events.InventoryReservedEvent;
 import com.github.gavro081.common.events.OrderCreatedEvent;
+import com.github.gavro081.productservice.exceptions.ProductNotFoundException;
 import com.github.gavro081.productservice.models.Product;
 import com.github.gavro081.productservice.repositories.ProductRepository;
 import jakarta.transaction.Transactional;
@@ -39,11 +40,10 @@ public class ProductService {
         return productRepository.findAll();
     }
 
-    public Product getProductById(Long id){
-        // todo: add custom exception
+    public Product getProductById(Long id) throws ProductNotFoundException{
         return productRepository
                 .findById(id)
-                .orElseThrow(() -> new RuntimeException("Product " + id + "is not found"));
+                .orElseThrow(() -> new ProductNotFoundException("Product " + id + "is not found"));
     }
 
     @Transactional
@@ -58,7 +58,7 @@ public class ProductService {
         Product product;
         try {
              product = getProductById(Long.parseLong(event.getProductId()));
-        } catch (RuntimeException e) {
+        } catch (ProductNotFoundException e) {
             logger.warn("Product not found for event {}. Publishing failure event.", event.getEventId());
             publishFailureEvent(event, ReservationFailureReason.PRODUCT_NOT_FOUND, "Product could not be found");
             return;
@@ -85,12 +85,16 @@ public class ProductService {
             return;
         }
 
-        // todo: handle thrown error if product is not found
-        Product product = getProductById(Long.parseLong(failedEvent.getProductId()));
-        product.setQuantity(product.getQuantity() + failedEvent.getQuantity());
-        productRepository.save(product);
-        logger.info("Released {} items for product {} from order {}",
-                failedEvent.getQuantity(), product.getId(), failedEvent.getOrderId());
+        try {
+            Product product = getProductById(Long.parseLong(failedEvent.getProductId()));
+            product.setQuantity(product.getQuantity() + failedEvent.getQuantity());
+            productRepository.save(product);
+            logger.info("Released {} items for product {} from order {}",
+                    failedEvent.getQuantity(), product.getId(), failedEvent.getOrderId());
+        } catch (ProductNotFoundException e){
+            logger.error("Product {} not found.", failedEvent.getProductId());
+            throw new RuntimeException("Failed to process inventory release for product " + failedEvent.getProductId(), e);
+        }
     }
 
     private void publishFailureEvent(OrderCreatedEvent orderEvent, ReservationFailureReason reason, String message){
@@ -108,17 +112,16 @@ public class ProductService {
     }
 
     private void publishSuccessEvent(OrderCreatedEvent orderEvent, Product product){
-        // todo: replace with builder
-        InventoryReservedEvent reservedEvent = new InventoryReservedEvent(
-                orderEvent.getOrderId(),
-                orderEvent.getUserId(),
-                orderEvent.getProductId(),
-                product.getName(),
-                orderEvent.getQuantity(),
-                product.getPrice(),
-                product.getPrice() * orderEvent.getQuantity(),
-                orderEvent.getUsername()
-        );
+        InventoryReservedEvent reservedEvent = InventoryReservedEvent.builder()
+                .orderId(orderEvent.getOrderId())
+                .userId(orderEvent.getUserId())
+                .productId(orderEvent.getProductId())
+                .productName(product.getName())
+                .quantity(orderEvent.getQuantity())
+                .unitPrice(product.getPrice())
+                .totalPrice(product.getPrice() * orderEvent.getQuantity())
+                .username(orderEvent.getUsername())
+                .build();
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE_NAME,
                 "inventory.reserved",

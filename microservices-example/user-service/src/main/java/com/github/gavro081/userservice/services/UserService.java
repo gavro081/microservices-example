@@ -79,27 +79,25 @@ public class UserService {
     }
 
     private void publishFailureEvent(InventoryReservedEvent event, DebitFailureReason reason, String message) {
-        //todo: replace with builder
-        BalanceDebitFailedEvent failedEvent = new BalanceDebitFailedEvent(
-                event.getOrderId(),
-                event.getProductId(),
-                event.getQuantity(),
-                reason,
-                message,
-                event.getUsername()
-        );
+        BalanceDebitFailedEvent failedEvent = BalanceDebitFailedEvent.builder()
+                .orderId(event.getOrderId())
+                .username(event.getUsername())
+                .productId(event.getProductId())
+                .reason(reason)
+                .quantity(event.getQuantity())
+                .message(message)
+                .build();
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "balance.failed", failedEvent);
     }
     private void publishSuccessEvent(InventoryReservedEvent event, User user){
-        // todo: replace with builder
-        BalanceDebitedEvent newEvent = new BalanceDebitedEvent(
-                event.getOrderId(),
-                user.getId(),
-                event.getProductId(),
-                event.getTotalPrice(),
-                event.getProductName(),
-                event.getUsername()
-        );
+        BalanceDebitedEvent newEvent = BalanceDebitedEvent.builder()
+                .orderId(event.getOrderId())
+                .userId(user.getId())
+                .productId(event.getProductId())
+                .totalPrice(event.getTotalPrice())
+                .productName(event.getProductName())
+                .username(event.getUsername())
+                .build();
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "balance.success", newEvent);
     }
 

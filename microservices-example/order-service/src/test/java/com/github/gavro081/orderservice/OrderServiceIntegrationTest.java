@@ -122,4 +122,37 @@ class OrderServiceIntegrationTest {
             assertThat(savedOrder.getProductId()).isEqualTo(productId);
         });
     }
+
+    @Test
+    void whenCreateOrderWithNonexistentProduct_thenReturns404() {
+        // 1. Configure WireMock for a 404 on product, but success on user
+        String productName = "NonExistentProduct";
+        String username = "test-user";
+        long userId = 1L;
+
+        stubFor(WireMock.get(urlEqualTo("/products/by-name/" + productName))
+                .willReturn(aResponse().withStatus(404)));
+
+        stubFor(WireMock.get(urlEqualTo("/users/by-username/" + username))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .withBody("{\"id\":" + userId + "}")));
+
+        // 2. Create the API request body
+        OrderRequest orderRequest = new OrderRequest(username, productName, "1");
+
+        // 3. Make the API call and assert for 404 Not Found
+        webTestClient.post().uri("/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(orderRequest)
+                .exchange()
+                .expectStatus().isNotFound();
+
+        // 4. Verify no order was saved
+        assertThat(orderRepository.count()).isZero();
+
+        // 5. Verify no event was published
+        Message resultMessage = rabbitTemplate.receive("products_queue", 100);
+        assertThat(resultMessage).isNull();
+    }
 }

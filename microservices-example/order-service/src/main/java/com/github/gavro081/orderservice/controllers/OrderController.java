@@ -30,8 +30,6 @@ class OrderController {
     ResponseEntity<UUID> postOrder(
             @Valid @RequestBody OrderRequest orderRequest) {
         UUID orderId = orderService.createOrder(orderRequest);
-        if (orderId == null)
-            return ResponseEntity.badRequest().build();
         return ResponseEntity.accepted().body(orderId);
     }
 

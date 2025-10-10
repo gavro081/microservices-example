@@ -5,6 +5,9 @@ import com.github.gavro081.common.dto.ProductDetailDto;
 import com.github.gavro081.common.dto.UserDetailDto;
 import com.github.gavro081.common.events.OrderCreatedEvent;
 import com.github.gavro081.orderservice.dao.OrderRequest;
+import com.github.gavro081.orderservice.exceptions.ExternalServiceException;
+import com.github.gavro081.orderservice.exceptions.OrderNotFoundException;
+import com.github.gavro081.orderservice.exceptions.ResourceNotFoundException;
 import com.github.gavro081.orderservice.models.Order;
 import com.github.gavro081.orderservice.models.OrderStatus;
 import com.github.gavro081.orderservice.repositories.OrderRepository;
@@ -43,11 +46,10 @@ public class OrderService {
         this.notificationService = notificationService;
     }
 
-    private Order getOrderById(UUID orderId) {
-        // todo: add custom exception
+    private Order getOrderById(UUID orderId) throws OrderNotFoundException{
         return orderRepository
                 .findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order " + orderId + "is not found"));
+                .orElseThrow(() -> new OrderNotFoundException("Order " + orderId + "is not found"));
     }
 
     public List<Order> getOrders(){
@@ -55,20 +57,8 @@ public class OrderService {
     }
 
     public UUID createOrder(OrderRequest orderRequest){
-        UserDetailDto userDto;
-        ProductDetailDto productDto;
-        try {
-            userDto = getUserIdFromUsername(orderRequest.username());
-            productDto = getProductIdFromProductName(orderRequest.productName());
-        } catch (Exception e) {
-            return null;
-        }
-
-        if (userDto == null || productDto == null) {
-            // todo: add better error handling
-            logger.error("User or product not found, cannot create order.");
-            return null;
-        }
+        UserDetailDto userDto = getUserIdFromUsername(orderRequest.username());
+        ProductDetailDto productDto = getProductIdFromProductName(orderRequest.productName());
 
         Order newOrder = Order.builder()
                 .userId(userDto.id())
@@ -94,7 +84,7 @@ public class OrderService {
         Order order;
         try {
              order = getOrderById(orderId);
-        } catch (RuntimeException e) {
+        } catch (OrderNotFoundException e) {
             logger.warn("Order {} not found.", orderId);
             return;
         }
@@ -110,28 +100,30 @@ public class OrderService {
         }
     }
 
-    private ProductDetailDto getProductIdFromProductName(String productName) throws Exception {
-        // todo: service discovery ? or something else, but dont hardcode the uri
+    private ProductDetailDto getProductIdFromProductName(String productName) {
         String url = productServiceUrl + "/products/by-name/{name}";
         return webClientBuilder.build().get()
                 .uri(url, productName)
                 .retrieve()
-                .onStatus(HttpStatus.NOT_FOUND::equals, response -> Mono.empty())
+                .onStatus(HttpStatus.NOT_FOUND::equals, response -> Mono.error(new ResourceNotFoundException("Product not found: " + productName)))
                 .bodyToMono(ProductDetailDto.class)
+                .doOnError(e -> !(e instanceof ResourceNotFoundException), e -> {
+                    throw new ExternalServiceException("Error fetching product details for " + productName, e);
+                })
                 .block();
     }
 
-    private UserDetailDto getUserIdFromUsername(String username) throws Exception {
-        // todo: service discovery ? or something else, but dont hardcode the uri
-        // read what exactly each of these do
+    private UserDetailDto getUserIdFromUsername(String username) {
         String url = userServiceUrl + "/users/by-username/{username}";
         return webClientBuilder.build().get()
                 .uri(url, username)
                 .retrieve()
-                .onStatus(HttpStatus.NOT_FOUND::equals, response -> Mono.empty())
+                .onStatus(HttpStatus.NOT_FOUND::equals, response -> Mono.error(new ResourceNotFoundException("User not found: " + username)))
                 .bodyToMono(UserDetailDto.class)
+                .doOnError(e -> !(e instanceof ResourceNotFoundException), e -> {
+                    throw new ExternalServiceException("Error fetching user details for " + username, e);
+                })
                 .block();
-
     }
 
     public Order getLastOrder() {

@@ -1,6 +1,7 @@
 package com.github.gavro081.common.events;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +10,7 @@ import java.util.UUID;
 
 @AllArgsConstructor
 @Getter @Setter
+@Builder
 public class InventoryReservedEvent implements Serializable {
     private final UUID eventId = UUID.randomUUID();
 

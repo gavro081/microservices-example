@@ -68,7 +68,6 @@ const connectAndSubscribe = (username) => {
 
 		stompClient.subscribe(subscriptionUrl, (message) => {
 			const update = JSON.parse(message.body);
-			console.log("received message", update);
 			orderStatus.innerText = update.status;
 
 			if (update.status == "COMPLETED" || update.status == "FAILED") {
@@ -85,7 +84,6 @@ let loadViewTimeout = null;
 
 const loadView = async () => {
 	if (loadViewTimeout) {
-		console.log(4);
 		clearTimeout(loadViewTimeout);
 		loadViewTimeout = null;
 	}
@@ -97,7 +95,6 @@ const loadView = async () => {
 		const response = await fetch("http://localhost:8080/api/products");
 		const data = await response.json();
 		renderProductsTable(data);
-		console.log(data);
 	} catch (err) {
 		console.error("error: ", err);
 		loadViewTimeout = setTimeout(loadView, 3000);
@@ -107,7 +104,6 @@ const loadView = async () => {
 		const response = await fetch("http://localhost:8080/api/users");
 		const data = await response.json();
 		renderUsersTable(data);
-		console.log(data);
 	} catch (err) {
 		console.error("error: ", err);
 		loadViewTimeout = setTimeout(loadView, 3000);
@@ -116,7 +112,6 @@ const loadView = async () => {
 	try {
 		const response = await fetch("http://localhost:8080/api/orders/last");
 		const data = await response.json();
-		console.log(data);
 		renderOrderTable(data);
 	} catch (err) {
 		console.error("error: ", err);
